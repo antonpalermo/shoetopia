@@ -1,106 +1,79 @@
-import {
-  Resolver,
-  Query,
-  Arg,
-  ObjectType,
-  Field,
-  Mutation,
-  InputType,
-} from 'type-graphql'
-import { getConnection } from 'typeorm'
-
-import ErrorSchema from '../schema/ErrorSchema'
-import ShoeSchema from '../schema/ShoeSchema'
+import { Resolver, Query, Arg, Field, Mutation, InputType } from 'type-graphql'
+import { getConnection, getRepository } from 'typeorm'
 
 import Shoe from '../entity/Shoe'
-
-@ObjectType()
-class QueryResponse {
-  @Field(() => [ErrorSchema], { nullable: true })
-  errors?: ErrorSchema[]
-
-  @Field(() => [ShoeSchema], { nullable: true })
-  data?: ShoeSchema[]
-}
+import ShoeSchema from '../schema/ShoeSchema'
 
 @InputType()
-class ShoeInput {
-  @Field()
+class DataFields {
+  @Field({ nullable: true })
   name?: string
 
-  @Field()
+  @Field({ nullable: true })
   description?: string
 
-  @Field()
+  @Field({ nullable: true })
   size?: number
 
-  @Field()
+  @Field({ nullable: true })
   price?: number
 }
 
 @Resolver(ShoeSchema)
 class ShoeResolver {
-  @Query(() => QueryResponse)
-  async getShoes(): Promise<QueryResponse> {
-    const result = await getConnection().getRepository(Shoe).find()
-    if (!result) {
-      return {
-        errors: [
-          {
-            type: 'Empty Query',
-            message: 'Unable to fetch all data',
-          },
-        ],
-      }
-    }
-    return {
-      data: result,
-    }
+  @Query(() => [ShoeSchema])
+  async shoes(): Promise<ShoeSchema[]> {
+    return await getRepository(Shoe).createQueryBuilder('shoe').getMany()
   }
 
-  @Query(() => QueryResponse)
-  async getShoe(@Arg('id') id: string): Promise<QueryResponse> {
-    const result = await getConnection().getRepository(Shoe).findOne(id)
-    if (!result) {
-      return {
-        errors: [
-          {
-            type: 'Empty Query',
-            message: id + 'not found',
-          },
-        ],
-      }
-    }
-    return {
-      data: [{ ...result }],
-    }
+  @Query(() => ShoeSchema, { nullable: true })
+  async shoe(@Arg('id') id: string): Promise<ShoeSchema> {
+    return await getRepository(Shoe)
+      .createQueryBuilder('shoe')
+      .where('id=:id', { id })
+      .getOne()
   }
 
-  @Mutation(() => QueryResponse)
-  async addShoe(@Arg('shoe') shoe: ShoeInput): Promise<QueryResponse> {
-    const result = await getConnection()
-      .getRepository(Shoe)
-      .createQueryBuilder()
-      .insert()
-      .into(Shoe)
-      .values({ ...shoe })
-      .returning('*')
-      .execute()
+  @Mutation(() => ShoeSchema)
+  async create(@Arg('shoe') shoe: DataFields): Promise<ShoeSchema> {
+    return await (
+      await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(Shoe)
+        .values({ ...shoe })
+        .returning('*')
+        .execute()
+    ).raw[0]
+  }
 
-    if (!result) {
-      return {
-        errors: [
-          {
-            type: 'Error insert',
-            message: 'Unable to insert ' + shoe.name,
-          },
-        ],
-      }
-    }
+  @Mutation(() => ShoeSchema)
+  async update(
+    @Arg('id') id: string,
+    @Arg('shoe') shoe: DataFields
+  ): Promise<ShoeSchema> {
+    return await (
+      await getRepository(Shoe)
+        .createQueryBuilder()
+        .update()
+        .set({ ...shoe })
+        .where('id=:id', { id })
+        .returning('*')
+        .execute()
+    ).raw[0]
+  }
 
-    return {
-      data: [{ ...result.raw[0] }],
-    }
+  @Mutation(() => ShoeSchema)
+  async delete(@Arg('id') id: string): Promise<ShoeSchema> {
+    return await (
+      await getConnection()
+        .createQueryBuilder()
+        .delete()
+        .from(Shoe)
+        .where('id = :id', { id })
+        .returning('*')
+        .execute()
+    ).raw[0]
   }
 }
 
