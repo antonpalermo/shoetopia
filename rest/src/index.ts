@@ -1,10 +1,10 @@
 import 'dotenv/config'
 import 'reflect-metadata'
-import express from 'express'
 import { buildSchema } from 'type-graphql'
 import { ApolloServer } from 'apollo-server-express'
 import { createConnection } from 'typeorm'
-import Shoe from './entity/Shoe'
+
+import express from 'express'
 
 createConnection()
   .then(async (conn) => {
@@ -14,22 +14,6 @@ createConnection()
     app.get('/', (_, res) => {
       res.status(200).send({ message: 'OK' })
     })
-
-    const result = await conn
-      .getRepository(Shoe)
-      .createQueryBuilder('shoe')
-      .insert()
-      .into(Shoe)
-      .values({
-        name: 'Adidas',
-        description: 'the addidas shoe',
-        size: 32.0,
-        price: 5000.0,
-      })
-      .returning('*')
-      .execute()
-
-    console.log(result.raw[0])
 
     const apolloServer = new ApolloServer({
       schema: await buildSchema({
