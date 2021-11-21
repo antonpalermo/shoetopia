@@ -1,2 +1,1 @@
-# shoetopia
-virtual shoe shop for the people
+# Shoetopia - Frontend
