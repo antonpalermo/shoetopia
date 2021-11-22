@@ -1,8 +1,19 @@
-import React from 'react';
-import { AppProps } from 'next/app';
+import React from 'react'
+import { AppProps } from 'next/app'
+
+import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client'
 
 const App: React.FunctionComponent<AppProps> = ({ Component, pageProps }) => {
-  return <Component {...pageProps} />;
-};
+  const client = new ApolloClient({
+    uri: 'http://localhost:4000/graphql',
+    cache: new InMemoryCache(),
+  })
 
-export default App;
+  return (
+    <ApolloProvider client={client}>
+      <Component {...pageProps} />
+    </ApolloProvider>
+  )
+}
+
+export default App
