@@ -24,11 +24,12 @@ const Home: React.FunctionComponent = () => {
   return (
     <>
       <h1>Shoetopia</h1>
-      {data.shoes.map((shoe: any, i: number) => (
+      {/* {data.shoes.map((shoe: any, i: number) => (
         <div key={i}>
           <h1>{shoe.name}</h1>
         </div>
-      ))}
+      ))} */}
+      <p>This site currently under maintenance...</p>
     </>
   )
 }
